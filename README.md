@@ -25,10 +25,13 @@ rust_os = "0.1.0"
 #![no_std]
 #![no_main]
 use kernal::{println, spin);
+use bootloader::{entry_point,BootInfo};
 
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
+entry_point!(main)
+
+fn main(bootInfo: &'static BootInfo) -> ! {
     kernal::init();
+    kernal::init_heap(bootInfo);
     println!("Hello World!");
     spin!()
 }
@@ -44,3 +47,4 @@ pub extern "C" fn _start() -> ! {
 - pic8259_simple (0.2.0)
 - pc-keyboard (0.5.0)
 - lazy_static (1.0)
+- linked_list_allocator (0.8.0)
