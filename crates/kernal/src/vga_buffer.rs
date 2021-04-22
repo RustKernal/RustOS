@@ -17,9 +17,8 @@ macro_rules! println {
     ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
 }
 
-#[macro_export]
-macro_rules! clear {
-    () => ($crate::vga_buffer::_clear());
+pub macro clear() {
+    _clear();
 }
 
 pub macro set_colour($fg:expr, $bg:expr) {
@@ -156,8 +155,11 @@ impl Writer {
     }
 
     pub fn clear_screen(&mut self) {
-        for _i in 0..BUFFER_HEIGHT {
-            self.new_line();
+        let blank = ScreenChar {ascii_character: b' ', color_code: self.color_code};
+        for r in 0..BUFFER_HEIGHT {
+            for c in 0..BUFFER_WIDTH {
+                self.buffer.chars[r][c].write(blank);
+            }
         }
     }
 
