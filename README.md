@@ -24,7 +24,7 @@ rust_os = "0.1.0"
 ```rust
 #![no_std]
 #![no_main]
-use kernal::{println, spin);
+use kernal::{println, spin};
 use bootloader::{entry_point,BootInfo};
 
 entry_point!(main)
