@@ -5,13 +5,35 @@
 #![reexport_test_harness_main = "test_main"]
 
 #![feature(abi_x86_interrupt)]
+#![feature(alloc_error_handler)] // at the top of the file
+
+extern crate alloc;
 
 pub mod vga_buffer;
 pub mod serial;
 pub mod interrupts;
 pub mod gdt;
+pub mod memory;
+pub mod allocator;
 
 use core::panic::PanicInfo;
+
+use bootloader::BootInfo;
+use memory::BootInfoFrameAllocator;
+use x86_64::VirtAddr;
+
+pub macro spin() {
+    loop {x86_64::instructions::hlt()}
+}
+
+pub fn init_heap(boot_info: &'static BootInfo) {
+    let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
+    let mut mapper = unsafe { memory::init(phys_mem_offset) };
+    let mut frame_allocator = unsafe { BootInfoFrameAllocator::init(&boot_info.memory_map) };
+    
+    allocator::init_heap(&mut mapper, &mut frame_allocator)
+        .expect("heap initialization failed");
+}
 
 
 pub fn init() {
@@ -21,12 +43,18 @@ pub fn init() {
     x86_64::instructions::interrupts::enable();
 }
 
+#[alloc_error_handler]
+fn alloc_error_handler(layout: alloc::alloc::Layout) -> ! {
+    panic!("allocation error: {:?}", layout)
+}
+
 #[cfg(not(test))] // new attribute
 #[panic_handler]
 fn panic_handler(info: &PanicInfo) -> ! {
     use vga_buffer::{set_colour, Color};
     set_colour!(Color::White, Color::Red);
     print!("Kernal Panic {}", info);
+    set_colour!(Color::White, Color::Black);
 	loop {}
 }
 

@@ -4,22 +4,37 @@
 #![test_runner(crate::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
-use kernal::{println, print, serial_println, serial_print};
+use kernal::{println, serial_println, serial_print, spin};
 use kernal::{clear};
-use kernal::vga_buffer::{Color, set_colour};
 
-use x86_64::instructions::hlt;
+
+
+use bootloader::entry_point;
+use bootloader::BootInfo;
+
+extern crate alloc;
+
+use alloc::boxed::Box;
+
+entry_point!(main);
 
 #[no_mangle]
-pub extern "C" fn _start() -> ! {
+fn main(boot_info: &'static BootInfo) -> ! {
     kernal::init();
+    kernal::init_heap(boot_info);
     #[cfg(test)]
     test_main();
+
+    
+
     clear!();
     println!("Hello World!");
-    loop {
-        hlt();
-    }
+
+    let x= Box::new(90);
+    println!("{}", *x);
+
+    println!("Still Here!");
+    spin!();
 }
 
 
